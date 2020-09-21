@@ -1,19 +1,20 @@
 #!/bin/bash
 
-storage_dir=
-n_src=
+storage_dir=/mnt/scratch07/hushell/UploadAI/datasets
+n_src=2
 python_path=python
 
-. ./utils/parse_options.sh
+#. ./utils/parse_options.sh
 
-current_dir=$(pwd)
+#current_dir=$(pwd)
 # Clone LibriMix repo
-git clone https://github.com/JorisCos/LibriMix
+#git clone https://github.com/JorisCos/LibriMix
 
 # Run generation script
-cd LibriMix
-. generate_librimix.sh $storage_dir
+#cd LibriMix
+#. generate_librimix.sh $storage_dir
 
-cd $current_dir
-$python_path local/create_local_metadata.py --librimix_dir $storage_dir/Libri$n_src"Mix"
+#cd $current_dir
+#$python_path local/create_local_metadata.py --librimix_dir $storage_dir/Avatar10Mix$n_src
+$python_path local/create_local_metadata.py --librimix_dir $storage_dir/Libri${n_src}Mix --local_dir libri2mix
 

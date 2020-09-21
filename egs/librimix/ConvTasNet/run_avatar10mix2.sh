@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Exit on error
-set -e
-set -o pipefail
+#set -e
+#set -o pipefail
 
 # If you haven't generated LibriMix start from stage 0
 # Main storage directory. You'll need disk space to store LibriSpeech, WHAM noises
 # and LibriMix. This is about 500 Gb
-storage_dir=/mnt/scratch07/hushell/UploadAI/datasets/Libri2Mix
+storage_dir=/mnt/scratch07/hushell/UploadAI/datasets/Avatar10Mix2
 
 # After running the recipe a first time, you can run it from stage 3 directly to train new models.
 
@@ -20,11 +20,12 @@ python_path=python
 
 # General
 stage=1  # Controls from which stage to start
-tag="Libri2Mix"  # Controls the directory name associated to the experiment
+tag="Avatar10Mix2"  # Controls the directory name associated to the experiment
 # You can ask for several GPUs using id (passed to CUDA_VISIBLE_DEVICES)
 #id=$CUDA_VISIBLE_DEVICES
-id=0,1,2,3,4,5,6,7
-out_dir=libri2mix # Controls the directory name associated to the evaluation results inside the experiment directory
+#id=0,1,2,3,4,5,6,7
+id=0,1
+out_dir=avatarmix # Controls the directory name associated to the evaluation results inside the experiment directory
 
 # Network config
 n_blocks=8
@@ -34,7 +35,7 @@ mask_act=relu
 # Training config
 epochs=200
 batch_size=6
-num_workers=16
+num_workers=4
 half_lr=yes
 early_stop=yes
 
@@ -44,15 +45,15 @@ lr=0.001
 weight_decay=0.
 
 # Data config
-train_dir=data/libri2mix/wav8k/min/train-360
-valid_dir=data/libri2mix/wav8k/min/dev
-test_dir=data/libri2mix/wav8k/min/test
+train_dir=data/avatar10mix2/wav8k/min/train-100-rand10-train
+valid_dir=data/avatar10mix2/wav8k/min/train-100-rand10-test
+test_dir=data/avatar10mix2/wav8k/min/train-100-rand10-test
 sample_rate=8000
 n_src=2
 segment=3
 task=sep_clean  # one of 'enh_single', 'enh_both', 'sep_clean', 'sep_noisy'
 
-. utils/parse_options.sh
+sh utils/parse_options.sh
 
 
 if [[ $stage -le  0 ]]; then
@@ -74,6 +75,7 @@ echo "Results from the following experiment will be stored in $expdir"
 if [[ $stage -le 1 ]]; then
   echo "Stage 1: Training"
   mkdir -p logs
+  echo train.py --exp_dir $expdir \
   CUDA_VISIBLE_DEVICES=$id $python_path train.py --exp_dir $expdir \
 		--n_blocks $n_blocks \
 		--n_repeats $n_repeats \
@@ -92,17 +94,18 @@ if [[ $stage -le 1 ]]; then
 		--n_src $n_src \
 		--task $task \
 		--segment $segment | tee logs/train_${tag}.log
+
 	cp logs/train_${tag}.log $expdir/train.log
 
-	# Get ready to publish
-	mkdir -p $expdir/publish_dir
-	echo "librimix/ConvTasNet" > $expdir/publish_dir/recipe_name.txt
+	## Get ready to publish
+	#mkdir -p $expdir/publish_dir
+	#echo "librimix/ConvTasNet" > $expdir/publish_dir/recipe_name.txt
 fi
 
 if [[ $stage -le 2 ]]; then
 	echo "Stage 2 : Evaluation"
-  CUDA_VISIBLE_DEVICES=$id $python_path eval.py --exp_dir $expdir --test_dir $test_dir \
-  	--out_dir $out_dir --use_gpu 1 \
+  $python_path eval.py --exp_dir $expdir --test_dir $test_dir \
+  	--out_dir $out_dir \
   	--task $task | tee logs/eval_${tag}.log
 	cp logs/eval_${tag}.log $expdir/eval.log
 fi
